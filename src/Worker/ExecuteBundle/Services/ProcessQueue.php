@@ -11,6 +11,7 @@ namespace Worker\ExecuteBundle\Services;
 
 use Cloud\AmazonBundle\Services\Dynamo;
 use Cloud\AmazonBundle\Services\Queue;
+use Cloud\AmazonBundle\Services\S3;
 
 class ProcessQueue
 {
@@ -24,44 +25,50 @@ class ProcessQueue
 
     protected $queueService = null;
     protected $dynamoService = null;
+    protected $s3Service = null;
 
-    public function __construct(Queue $queueService, Dynamo $dynamoService)
+    public function __construct(Queue $queueService, Dynamo $dynamoService, S3 $s3Service)
     {
         $this->queueService = $queueService;
         $this->dynamoService = $dynamoService;
+        $this->s3Service = $s3Service;
     }
 
     public function run()
     {
         while (true) {
-            $message = $this->queueService->getMessage();
-            $message = array('body' => "88-_-5", 'receipt' => 'kmkm');
-            if (empty($message)) {
+            $messages = $this->queueService->getMessage();
+            if (empty($messages)) {
                 continue;
             }
-            $explode = array();
-            $explode = explode(self::MESSAGES_SEPARATOR, $message['body']);
-            $userId = $explode[0];
-            $photoId = $explode[1];
-            $images = $this->dynamoService->getItems($this->getDynamoFilters($userId, $photoId));
+            foreach ($messages as $message) {
+                $explode = array();
+                $explode = explode(self::MESSAGES_SEPARATOR, $message['body']);
+                $userId = $explode[0];
+                $photoId = $explode[1];
+                if(empty($userId) || empty($photoId)){
 
-            foreach ($images as $image) {
-                if ((int)$image['status'] != self::STATUS_NEW) {
-                    continue;
                 }
-                try {
-                    $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_IN_PROGRESS));
-                    $dataToSave = $this->processImage($image);
-                    $this->dynamoService->addItems($dataToSave);
-                    $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_DONE));
-                } catch (\Exception $e) {
-                    $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_ERROR));
+                $images = $this->dynamoService->getItems($this->getDynamoFilters($userId, $photoId));
+                $dataToSave = array();
+                foreach ($images as $image) {
+                    if ((int)$image['status'] != self::STATUS_NEW) {
+                        continue;
+                    }
+                    try {
+                        $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_IN_PROGRESS));
+                        $dataToSave = $this->processImage($image);
+                        $this->dynamoService->addItems($dataToSave);
+                        $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_DONE));
+                    } catch (\Exception $e) {
+                        $this->dynamoService->updatePhotoItem($userId, $photoId, array('Status' => (string)self::STATUS_ERROR));
+                    }
                 }
-                dump($dataToSave);
-                die;
+                $this->queueService->deleteMessage($message['receipt']);
             }
         }
     }
+
 
     protected function processImage(array $image)
     {
@@ -75,11 +82,12 @@ class ProcessQueue
             $filteredImages = $transformService->applyAllFilters();
             $dataToSave = array();
             foreach ($filteredImages as $filteredImage) {
+                $s3Path = $this->s3Service->uploadPhoto($filteredImage['absolutePath'], $filteredImage['id']);
                 $dataToSave[] = array(
                     'user_id' => (string)$image['user_id'],
                     'photo_id' => (string)$filteredImage['id'],
                     'filename' => (string)$filteredImage['filename'],
-                    'path_to_s3' => (string)$filteredImage['absolutePath'], //TODO set path to s3
+                    'path_to_s3' => (string)$s3Path,
                     'status' => (string)self::STATUS_DONE,
                     'parent' => (string)$image['photo_id']
                 );
