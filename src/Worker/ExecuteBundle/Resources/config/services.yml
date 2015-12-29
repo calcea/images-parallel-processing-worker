@@ -1,0 +1,4 @@
+services:
+#    worker_execute.example:
+#        class: Worker\ExecuteBundle\Example
+#        arguments: [@service_id, "plain_value", %parameter%]

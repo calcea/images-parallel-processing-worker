@@ -1,0 +1,10 @@
+worker_execute:
+    resource: "@WorkerExecuteBundle/Resources/config/routing.yml"
+    prefix:   /worker/
+
+cloud_amazon:
+    resource: "@CloudAmazonBundle/Resources/config/routing.yml"
+    prefix:   /
+app:
+    resource: "@AppBundle/Controller/"
+    type:     annotation

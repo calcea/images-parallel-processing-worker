@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="reviews-box">
+    <serverData>
+      <paths name="reviews-box">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="images-worker" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

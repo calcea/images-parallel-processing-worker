@@ -1,0 +1,11 @@
+worker_execute_homepage:
+    path:     /
+    defaults: { _controller: WorkerExecuteBundle:Default:index }
+worker_execute_filters:
+    path:     /filters
+    defaults: { _controller: WorkerExecuteBundle:Default:filters }
+
+
+worker_execute_run:
+    path:     /run
+    defaults: { _controller: WorkerExecuteBundle:Default:run }
