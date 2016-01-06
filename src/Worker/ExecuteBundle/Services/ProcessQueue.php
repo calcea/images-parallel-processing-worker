@@ -65,7 +65,7 @@ class ProcessQueue
                     }
                 }
                 $this->queueService->deleteMessage($message['receipt']);
-                
+
             }
         }
     }
