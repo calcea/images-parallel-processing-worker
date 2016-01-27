@@ -22,7 +22,8 @@ class RunWorkerCommand extends ContainerAwareCommand
     }
 
     public function execute(InputInterface $input, OutputInterface $output){
-        set_time_limit(3600);
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
         $s3Service = new S3();
         $queueService = new Queue();
         $dynamoService = new Dynamo(new PhotoItemBuilder(),self::TABLE_NAME);

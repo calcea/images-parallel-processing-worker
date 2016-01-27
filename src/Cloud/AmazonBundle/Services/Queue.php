@@ -8,7 +8,7 @@ class Queue
 {
 
     protected $client = null;
-    const QUEUE_URL = 'http://sqs.us-east-1.amazonaws.com/675072056297/ImageProcessingQueue';
+    const QUEUE_URL = 'http://sqs.us-east-1.amazonaws.com/675072056297/ImageProcessingSQS';
 
     public function __construct()
     {
